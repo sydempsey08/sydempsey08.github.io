@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- updated to be more responsive with different screen sizes -->
+    <title>FreightWise Programming Test</title>
+
+    <script>
+        'use strict';
+
+        /**
+        * Software Developer test for FreightWise LLC.
+        *
+        * Doing research and making API calls are an important part of what we do at FreightWise.  This test will
+        * demonstrate your abilities to:
+        *
+        * - Make an API call
+        * - Research an API
+        * - Do basic DOM manipulation
+        * - Parse data
+        * - Handle errors
+        * - Be creative
+        *
+        * Feel free to ask any questions you may have.  Use a lot of comments, and explain why you are doing things.
+        * Don't spend more than 1-2 hours on it - we aren't expecting a finished product, but it should work and look
+        * nice.  Feel free to use any third party libraries, and if you do so, explain why you used them instead of
+        * built in browser APIs.
+        *
+        * Instructions:
+        * - Use the axios (https://github.com/axios/axios) request library to make an API call to the OpenWeatherMap
+        *   API for Current Weather Data using this API key:  25e989bd41e3e24ce13173d8126e0fd6
+        *   We've already imported this library to get you started.
+        * - Use either async/await or Promises.
+        * - Get the weather for Brentwood, TN, and write it to the DOM using the `setResults` method below.  Be
+        *   creative and make it look nice.
+        * - Handle errors and use the `setError` method below to display the error.  Also make it look nice.
+        * - If you find any mistakes in the test, fix them, and leave a comment about what you fixed and why.
+        * - Make sure your code is readable and maintainable.
+        * - Use plenty of descriptive comments.
+        * - Make sure your code runs in the latest version of Google Chrome and Firefox (ES6 is allowed).
+        * - Make your code live (GitHub with GitHub pages works nice).
+        * - Send a link to your finished test to dev-team-jobs@freightwisellc.com.
+        *
+        * Feel free to add your own twist to it (completely optional).  Here are a few ideas:
+        * - Sign up for NewsAPI.org and get the Top Headlines and show them along with the weather.
+        * - Use the browser location API to get the user's current location, and show that location's weather.
+        * - Show a satellite map of the weather in Brentwood.
+        * - Request a user's phone number and send them an SMS with the weather.
+        */
+
+        /**
+        * Sources for images used:
+        *   Nashville background: https://travellemming.com/things-to-do-in-nashville/
+        *   Error Icon: https://www.iconfinder.com/icons/381599/error_icon
+        */
+
+        class Test {
+            // added a button param to the constructor so that the text can be updated based on
+            // the state of the weather results/errors
+            constructor(button) {
+                // FIX: fixed reference to the first element in the test-results
+                this.testResults = document.getElementsByClassName('test-results')[0];
+                this.button = button;
+            }
+
+            async run() {
+                console.log(new Date().toISOString(), '[Test]', 'Running the test');
+
+                // if the test results aren't empty, clear them. Otherwise, call the API and set the results.
+                // Added in so that if the user presses the button again, the weather will no longer show
+                if (this.testResults.innerHTML !== ``) {
+                    this.clearResults();
+                    this.button.innerText = 'Get the Brentwood Weather'; // Reset button text
+                }
+                else {
+                    const apiKey = '82b29084758890763e908bc65c8a3cd6'; // set personal Open Weather API key
+                    const city = 'Brentwood';
+                    const url = `https://api.openweathermap.org/data/2.5/weather?q=${city},TN,US&units=imperial&appid=${apiKey}`;
+
+                    try {
+                        const response = await axios.get(url);
+                        // use below line instead of top line to test what the error message looks like
+                        // const response = await axios.get("test");
+                        const openWeatherData = response.data;
+
+                        // if API request is successful, call setResults method and change button text
+                        this.button.innerText = 'Close Weather Description'; // reset button text
+                        this.setResults(openWeatherData);
+                    } catch (error) {
+                        // if API request fails, call setError method
+                        console.error(error);
+                        this.setError(`Failed to fetch weather data for Brentwood, TN: ${error.message}`);
+                        this.button.innerText = 'Retry'; // reset button text
+                    }
+                }
+            }
+
+            // method to set an error message if the API request fails
+            setError(message) {
+                this.testResults.innerHTML = `
+                    <div class="error">
+                    <img class="error-icon" src="error-icon.webp">
+                    <div>${message}</div>
+                    </div>
+                `;
+            }
+
+            // method to set the weather results
+            setResults(data) {
+                // check if wanted values exist. If they do exist, then set them to be used in the display
+                const weatherDescription = data.weather[0].description ? data.weather[0].description : '';
+                const currTemp = data.main.temp ? data.main.temp : '';
+                const minTemp = data.main.temp_min ? data.main.temp_min : '';
+                const maxTemp = data.main.temp_max ? data.main.temp_max : '';
+                const humidity = data.main.humidity ? data.main.humidity : '';
+                const feelsLike = data.main.feels_like ? data.main.feels_like : '';
+                const iconId = data.weather[0].icon ? data.weather[0].icon : '';
+                const iconUrl = `http://openweathermap.org/img/wn/${iconId}.png`; // set icon url based on icon ID
+
+
+                // display for the weather results
+                this.testResults.innerHTML = `
+                    <div class="weather">
+                        <h2>Weather in ${data.name}</h2>
+                        
+                        <div class="weather-details">
+                            <div class="weather-detail">
+                                <img class="weather-icon" src="${iconUrl}">
+                                <span class="value">${weatherDescription}</span>
+                            </div>
+                            <div class="weather-detail">
+                                <span class="label">Temperature:</span>
+                                <span class="value">${currTemp}°F</span>
+                            </div>
+                            <div class="weather-detail">
+                                <span class="label">Humidity:</span>
+                                <span class="value">${humidity}%</span>
+                            </div>
+                            <div class="weather-detail">
+                                <span class="label">Feels Like:</span>
+                                <span class="value">${feelsLike}°F</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // method for clearing out the weather results when the button is pushed a second time
+            clearResults() {
+                this.testResults.innerHTML = ``;
+            }
+        }
+    </script>
+
+    <style>
+        /* style for the button container */
+        .button-container {
+            position: fixed;
+            top: 20%; 
+            left: 50%; 
+            transform: translateX(-50%); 
+            text-align: center;
+            z-index: 10; 
+        }
+
+        /* style for the button */
+        .button-container > button {
+            margin: 0;
+            padding: 15px 45px;
+            color: white;
+            background-color: #c8860b;
+            border: none;
+            border-radius: 5px; 
+            transition: all 200ms ease-in-out;
+            font-size: 16px; 
+            cursor: pointer; 
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); 
+        }
+
+        /* brighten button color for hover state */
+        .button-container > button:hover {
+            background-color: #f3a71a;
+        }
+
+        /* active state for the button */
+        .button-container > button:active {
+            background-color: #c8860b;
+        }
+
+        /* set margins and overflow for html and body */
+        html, body {
+            height: 100%;
+            overflow: hidden; 
+            margin: 0; 
+        }
+
+        /* center the body content and set the background image for the page */
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: url('nash.jpg') no-repeat center center fixed; 
+            background-size: cover; 
+            position: relative;
+            font-family: Arial, sans-serif; 
+        }
+
+        /* blur the background image */
+        body::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: inherit;
+            filter: blur(3px); 
+            z-index: -1; 
+        }
+
+        /* container for the button and test results */
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+        }
+
+        /* style for the weather results */
+        .weather {
+            background-color: rgba(197, 128, 10, 0.8);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            max-width: 400px;
+            margin-top: 20px;
+        }
+
+        /* style for the weather details */
+        .weather-details {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+            text-align: left;
+        }
+
+        /* style for individual weather detail items */
+        .weather-detail {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        /* style for the weather detail labels */
+        .weather-detail .label {
+            font-weight: bold;
+            flex: 0 0 120px;
+        }
+
+        /* style for the weather detail values */
+        .weather-detail .value {
+            flex: 1;
+            text-align: left;
+            padding-left: 10px;
+        }
+
+        /* style for the weather icon */
+        .weather-icon {
+            width: 70px;
+            height: auto;
+            margin-right: 10px;
+        }
+
+        /* style for the error message */
+        .error {
+            color: red;
+            font-weight: bold;
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            max-width: 250px;
+            max-height: 200px;
+            margin-top: 50px;
+        }
+
+        /* style for the error icon */
+        .error-icon {
+            width: 40px; 
+            height: auto; 
+        }
+
+        /* responsive styles */
+        /* TODO: fix overlap for x-small screens */
+        @media (max-width: 780px) {
+            .button-container {
+                top: 10%; 
+            }
+            
+            .weather {
+                margin-top: 0px;
+                max-width: 90%;
+            }
+            
+            .weather-detail .label {
+                flex: 0 0 80px; 
+            }
+
+            .error {
+                margin-top: 0px;
+                max-width: 90%;
+            }
+        }
+
+    </style>
+
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+</head>
+<body>
+    <!-- wrapped in a div to stack the button above the results/error -->
+    <div class="container">
+        <div class="button-container"></div>
+        <div class="test-results"></div>
+    </div>
+    <script>
+        'use strict';
+
+        /**
+         * Creates a button for kicking off the test and adds it to the DOM.
+         *
+         * @param {HTMLElement} context  the parent element to add the button to
+         * @param {Test}        test     the test to be executed
+         * @returns {HTMLElement} the button added to the test
+         */
+         function addButtonForTest(context, test) {
+            let testButton = document.createElement('button');
+
+            testButton.type = 'button';
+            testButton.innerText = 'Get the Brentwood Weather';
+            testButton.onclick = () => test.run();
+
+            context.appendChild(testButton);
+
+            return testButton;
+        }
+
+        // Create the button and then create the Test instance with the button reference.
+        // A button reference is now passed to Test class so that the text can be updated
+        // based on the state of the results
+        const buttonContainer = document.getElementsByClassName('button-container')[0];
+        const testButton = addButtonForTest(buttonContainer);
+        const test = new Test(testButton);
+
+        // Add event handler for when the button is pressed
+        testButton.onclick = () => test.run();
+    </script>
+</body>
+</html>
